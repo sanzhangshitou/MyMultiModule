@@ -1,0 +1,35 @@
+# Auto-detect text files, normalize to LF on commit
+* text=auto
+
+# Source code
+*.cs          text diff=csharp
+*.csproj      text
+*.slnx        text
+*.json        text
+*.md          text
+*.xml         text
+*.yml         text
+*.yaml        text
+*.cshtml      text
+*.css         text
+*.js          text
+*.ts          text
+*.razor       text
+*.editorconfig text
+
+# Images (binary)
+*.png         binary
+*.jpg         binary
+*.jpeg        binary
+*.gif         binary
+*.ico         binary
+*.svg         text
+
+# Archives / packages
+*.zip         binary
+*.gz          binary
+*.tar         binary
+*.7z          binary
+
+# Shell scripts (LF required on Windows)
+*.sh          text eol=lf
