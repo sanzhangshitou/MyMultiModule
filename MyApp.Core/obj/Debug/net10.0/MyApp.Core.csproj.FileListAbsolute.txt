@@ -1,0 +1,15 @@
+D:\workspace\net\MyMultiModule\MyApp.Core\bin\Debug\net10.0\MyApp.Core.deps.json
+D:\workspace\net\MyMultiModule\MyApp.Core\bin\Debug\net10.0\MyApp.Core.dll
+D:\workspace\net\MyMultiModule\MyApp.Core\bin\Debug\net10.0\MyApp.Core.pdb
+D:\workspace\net\MyMultiModule\MyApp.Core\bin\Debug\net10.0\MyApp.Common.dll
+D:\workspace\net\MyMultiModule\MyApp.Core\bin\Debug\net10.0\MyApp.Common.pdb
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.csproj.AssemblyReference.cache
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.AssemblyInfoInputs.cache
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.AssemblyInfo.cs
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.csproj.CoreCompileInputs.cache
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.csproj.Up2Date
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.dll
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\refint\MyApp.Core.dll
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\MyApp.Core.pdb
+D:\workspace\net\MyMultiModule\MyApp.Core\obj\Debug\net10.0\ref\MyApp.Core.dll
