@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
 using MyApp.Core.DTOs.Product;
 using MyApp.Core.Entities;
 using MyApp.Core.Interfaces;
@@ -5,22 +7,43 @@ using MyApp.Core.Interfaces;
 namespace MyApp.Service;
 
 /// <summary>
-/// 商品分类服务实现
+/// 商品分类服务实现（Redis 缓存分类树）
 /// </summary>
 public class ProductCategoryService : IProductCategoryService
 {
-    private readonly IProductCategoryRepository _repo;
+    private const string CacheKey = "categories:tree";
+    private static readonly TimeSpan CacheExpiry = TimeSpan.FromHours(1);
 
-    public ProductCategoryService(IProductCategoryRepository repo)
+    private readonly IProductCategoryRepository _repo;
+    private readonly IDistributedCache _cache;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public ProductCategoryService(IProductCategoryRepository repo, IDistributedCache cache)
     {
         _repo = repo;
+        _cache = cache;
     }
 
-    /// <summary>获取分类树，从顶级开始递归构建</summary>
+    /// <summary>获取分类树，优先从 Redis 读取，未命中则查库并回填缓存</summary>
     public async Task<List<ProductCategoryDto>> GetTreeAsync()
     {
+        var cached = await _cache.GetStringAsync(CacheKey);
+        if (cached is not null)
+            return JsonSerializer.Deserialize<List<ProductCategoryDto>>(cached, JsonOptions)!;
+
         var all = await _repo.GetAllAsync();
-        return BuildTree(all, 0);
+        var tree = BuildTree(all, 0);
+
+        await _cache.SetStringAsync(CacheKey, JsonSerializer.Serialize(tree, JsonOptions), new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = CacheExpiry
+        });
+
+        return tree;
     }
 
     /// <summary>根据ID获取分类</summary>
@@ -30,7 +53,7 @@ public class ProductCategoryService : IProductCategoryService
         return entity is null ? null : Map(entity);
     }
 
-    /// <summary>新增分类</summary>
+    /// <summary>新增分类，移除缓存</summary>
     public async Task<ProductCategoryDto> CreateAsync(ProductCategoryDto input)
     {
         var entity = new ProductCategory
@@ -41,10 +64,11 @@ public class ProductCategoryService : IProductCategoryService
             IsEnabled = true
         };
         await _repo.InsertAsync(entity);
+        await _cache.RemoveAsync(CacheKey);
         return Map(entity);
     }
 
-    /// <summary>修改分类</summary>
+    /// <summary>修改分类，移除缓存</summary>
     public async Task<ProductCategoryDto> UpdateAsync(long id, ProductCategoryDto input)
     {
         var entity = await _repo.GetByIdAsync(id)
@@ -55,13 +79,15 @@ public class ProductCategoryService : IProductCategoryService
         entity.SortOrder = input.SortOrder;
         entity.IsEnabled = input.IsEnabled;
         await _repo.UpdateAsync(entity);
+        await _cache.RemoveAsync(CacheKey);
         return Map(entity);
     }
 
-    /// <summary>软删除分类</summary>
+    /// <summary>软删除分类，移除缓存</summary>
     public async Task DeleteAsync(long id)
     {
         await _repo.DeleteAsync(id);
+        await _cache.RemoveAsync(CacheKey);
     }
 
     /// <summary>实体转DTO</summary>

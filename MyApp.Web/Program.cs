@@ -12,6 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// 注册 Redis 分布式缓存
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
 // 注册 EF Core DbContext（MySQL + snake_case 命名）
 var connStr = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("未配置数据库连接字符串");
