@@ -1,0 +1,6 @@
+bin/
+obj/
+*.lscache
+
+# Environment-specific settings
+appsettings.*.local.json
