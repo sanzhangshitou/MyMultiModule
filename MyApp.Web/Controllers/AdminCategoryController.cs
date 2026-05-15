@@ -21,14 +21,14 @@ public class AdminCategoriesController : ControllerBase
 
     /// <summary>获取全部分类树</summary>
     [HttpGet]
-    public async Task<List<ProductCategoryDto>> GetTree()
+    public async Task<List<ProductCategoryDto>> GetTreeAsync()
     {
         return await _service.GetTreeAsync();
     }
 
     /// <summary>获取分类详情</summary>
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<ProductCategoryDto>> GetById(long id)
+    public async Task<ActionResult<ProductCategoryDto>> GetByIdAsync(long id)
     {
         var cat = await _service.GetByIdAsync(id);
         return cat is null ? NotFound() : Ok(cat);
@@ -36,15 +36,15 @@ public class AdminCategoriesController : ControllerBase
 
     /// <summary>新增分类</summary>
     [HttpPost]
-    public async Task<ActionResult<ProductCategoryDto>> Create([FromBody] ProductCategoryDto input)
+    public async Task<ActionResult<ProductCategoryDto>> CreateAsync([FromBody] ProductCategoryDto input)
     {
         var cat = await _service.CreateAsync(input);
-        return CreatedAtAction(nameof(GetById), new { id = cat.Id }, cat);
+        return CreatedAtAction(nameof(GetByIdAsync), new { id = cat.Id }, cat);
     }
 
     /// <summary>修改分类</summary>
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<ProductCategoryDto>> Update(long id, [FromBody] ProductCategoryDto input)
+    public async Task<ActionResult<ProductCategoryDto>> UpdateAsync(long id, [FromBody] ProductCategoryDto input)
     {
         var cat = await _service.UpdateAsync(id, input);
         return Ok(cat);
@@ -52,7 +52,7 @@ public class AdminCategoriesController : ControllerBase
 
     /// <summary>删除分类</summary>
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<IActionResult> DeleteAsync(long id)
     {
         await _service.DeleteAsync(id);
         return NoContent();

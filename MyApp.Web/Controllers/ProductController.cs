@@ -22,14 +22,14 @@ public class ProductsController : ControllerBase
 
     /// <summary>获取前台商品列表（仅上架商品），支持分页、搜索、分类筛选、排序</summary>
     [HttpGet]
-    public async Task<PagedResult<ProductDto>> GetList([FromQuery] ProductListRequest request)
+    public async Task<PagedResult<ProductDto>> GetListAsync([FromQuery] ProductListRequest request)
     {
         return await _service.GetFrontListAsync(request);
     }
 
     /// <summary>获取前台商品详情（仅上架商品），包含SKU列表</summary>
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<ProductDetailDto>> GetDetail(long id)
+    public async Task<ActionResult<ProductDetailDto>> GetDetailAsync(long id)
     {
         var detail = await _service.GetFrontDetailAsync(id);
         return detail is null ? NotFound() : Ok(detail);

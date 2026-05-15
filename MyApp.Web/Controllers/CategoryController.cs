@@ -21,14 +21,14 @@ public class CategoriesController : ControllerBase
 
     /// <summary>获取分类树（前台使用）</summary>
     [HttpGet]
-    public async Task<List<ProductCategoryDto>> GetTree()
+    public async Task<List<ProductCategoryDto>> GetTreeAsync()
     {
         return await _service.GetTreeAsync();
     }
 
     /// <summary>获取分类详情</summary>
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<ProductCategoryDto>> GetById(long id)
+    public async Task<ActionResult<ProductCategoryDto>> GetByIdAsync(long id)
     {
         var cat = await _service.GetByIdAsync(id);
         return cat is null ? NotFound() : Ok(cat);

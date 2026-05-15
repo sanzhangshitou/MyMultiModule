@@ -22,14 +22,14 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>获取商品列表（管理后台），支持分页、搜索、筛选、排序</summary>
     [HttpGet]
-    public async Task<PagedResult<ProductDto>> GetList([FromQuery] ProductListRequest request)
+    public async Task<PagedResult<ProductDto>> GetListAsync([FromQuery] ProductListRequest request)
     {
         return await _service.GetAdminListAsync(request);
     }
 
     /// <summary>获取商品详情（管理后台），包含SKU列表</summary>
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<ProductDetailDto>> GetDetail(long id)
+    public async Task<ActionResult<ProductDetailDto>> GetDetailAsync(long id)
     {
         var detail = await _service.GetAdminDetailAsync(id);
         return detail is null ? NotFound() : Ok(detail);
@@ -37,15 +37,15 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>新增商品（含SKU），初始状态为草稿</summary>
     [HttpPost]
-    public async Task<ActionResult<ProductDetailDto>> Create([FromBody] ProductCreateInput input)
+    public async Task<ActionResult<ProductDetailDto>> CreateAsync([FromBody] ProductCreateInput input)
     {
         var detail = await _service.CreateAsync(input);
-        return CreatedAtAction(nameof(GetDetail), new { id = detail.Id }, detail);
+        return CreatedAtAction(nameof(GetDetailAsync), new { id = detail.Id }, detail);
     }
 
     /// <summary>修改商品（整体替换SKU）</summary>
     [HttpPut("{id:long}")]
-    public async Task<ActionResult<ProductDetailDto>> Update(long id, [FromBody] ProductUpdateInput input)
+    public async Task<ActionResult<ProductDetailDto>> UpdateAsync(long id, [FromBody] ProductUpdateInput input)
     {
         var detail = await _service.UpdateAsync(id, input);
         return Ok(detail);
@@ -53,7 +53,7 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>删除商品（软删除）</summary>
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<IActionResult> DeleteAsync(long id)
     {
         await _service.DeleteAsync(id);
         return NoContent();
@@ -61,7 +61,7 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>上架商品（草稿或下架 → 上架）</summary>
     [HttpPut("{id:long}/shelve")]
-    public async Task<IActionResult> Shelve(long id)
+    public async Task<IActionResult> ShelveAsync(long id)
     {
         await _service.ShelveAsync(id);
         return Ok();
@@ -69,7 +69,7 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>下架商品（上架 → 下架）</summary>
     [HttpPut("{id:long}/unshelve")]
-    public async Task<IActionResult> Unshelve(long id)
+    public async Task<IActionResult> UnshelveAsync(long id)
     {
         await _service.UnshelveAsync(id);
         return Ok();
@@ -77,7 +77,7 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>启用商品（禁用 → 草稿）</summary>
     [HttpPut("{id:long}/enable")]
-    public async Task<IActionResult> Enable(long id)
+    public async Task<IActionResult> EnableAsync(long id)
     {
         await _service.EnableAsync(id);
         return Ok();
@@ -85,7 +85,7 @@ public class AdminProductsController : ControllerBase
 
     /// <summary>禁用商品（任意状态 → 禁用）</summary>
     [HttpPut("{id:long}/disable")]
-    public async Task<IActionResult> Disable(long id)
+    public async Task<IActionResult> DisableAsync(long id)
     {
         await _service.DisableAsync(id);
         return Ok();

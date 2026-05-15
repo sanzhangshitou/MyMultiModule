@@ -15,7 +15,7 @@ public class ProductService : IProductService
     private readonly IProductRepository _repo;
     private readonly IProductCategoryRepository _categoryRepo;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
@@ -269,12 +269,12 @@ public class ProductService : IProductService
     /// <summary>序列化对象为JSON字符串</summary>
     private static string? SerializeJson<T>(T? obj)
     {
-        return obj is null ? null : JsonSerializer.Serialize(obj, JsonOptions);
+        return obj is null ? null : JsonSerializer.Serialize(obj, _jsonOptions);
     }
 
     /// <summary>反序列化JSON字符串为对象</summary>
     private static T? DeserializeJson<T>(string? json)
     {
-        return json is null ? default : JsonSerializer.Deserialize<T>(json, JsonOptions);
+        return json is null ? default : JsonSerializer.Deserialize<T>(json, _jsonOptions);
     }
 }
