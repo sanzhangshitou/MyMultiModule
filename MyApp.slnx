@@ -1,7 +1,7 @@
 <Solution>
-  <Project Path="MyApp.Common/MyApp.Common.csproj" />
-  <Project Path="MyApp.Core/MyApp.Core.csproj" />
-  <Project Path="MyApp.Repository/MyApp.Repository.csproj" />
-  <Project Path="MyApp.Service/MyApp.Service.csproj" />
-  <Project Path="MyApp.Web/MyApp.Web.csproj" />
+	<Project Path="MyApp.Common/MyApp.Common.csproj" />
+	<Project Path="MyApp.Core/MyApp.Core.csproj" />
+	<Project Path="MyApp.Repository/MyApp.Repository.csproj" />
+	<Project Path="MyApp.Service/MyApp.Service.csproj" />
+	<Project Path="MyApp.Web/MyApp.Web.csproj" />
 </Solution>
