@@ -1,9 +1,9 @@
 # MyMultiModule
 
-基于 .NET 10 多模块分层架构的商城系统 — ASP.NET Core Web API + EF Core + MySQL。
+基于 .NET 10 多模块分层架构的商城系统 — ASP.NET Core Web API + EF Core + MySQL + Redis。
 
 - 多 SKU 商品管理（规格定义、库存、价格）
-- 分类树（自引用，递归构建）
+- 分类树（自引用、递归构建、Redis 缓存）
 - 管理后台 + 商城前台接口分离
 - 软删除、JSON 字段、全局查询过滤器
 
@@ -14,10 +14,10 @@ MyMultiModule/
 ├── MyApp.Web/                # 启动层 — 控制器、DI、中间件
 │   ├── Controllers/          # Home / AdminProducts / AdminCategories / Products / Categories
 │   ├── Program.cs            # 应用入口
-│   └── appsettings.json      # 连接字符串
+│   └── appsettings.json      # MySQL + Redis 连接字符串
 ├── MyApp.Service/            # 业务逻辑层
 │   ├── ProductService.cs     # 商品 CRUD、状态校验、SKU 组装
-│   └── ProductCategoryService.cs  # 分类树构建
+│   └── ProductCategoryService.cs  # 分类树构建 + Redis 缓存
 ├── MyApp.Repository/         # 数据访问层
 │   ├── AppDbContext.cs       # EF Core DbContext（索引、过滤器、关系映射）
 │   ├── ProductRepository.cs
@@ -42,7 +42,7 @@ Web → Service → Repository → Core → Common
 | 层 | 职责 | 项目引用 |
 |----|------|----------|
 | Web | HTTP 路由、参数绑定、JSON 响应 | Service, Core, Common |
-| Service | 业务编排、状态校验 | Repository, Core, Common |
+| Service | 业务编排、状态校验、Redis 缓存 | Repository, Core, Common |
 | Repository | EF Core 查询、实体映射 | Core, Common |
 | Core | 实体、DTO、枚举、接口 | Common |
 | Common | 共享工具类 | — |
@@ -55,6 +55,7 @@ Web → Service → Repository → Core → Common
 | EF Core 9.0.5 | ORM |
 | Pomelo.EntityFrameworkCore.MySql 9.0 | MySQL 驱动 |
 | EFCore.NamingConventions 9.0 | `CamelCase` → `snake_case` 自动映射 |
+| StackExchangeRedis 9.0.5 | Redis 分布式缓存 |
 | Microsoft.AspNetCore.OpenApi 10.0.8 | `/openapi/v1.json` |
 
 ## 快速开始
@@ -87,7 +88,8 @@ dotnet format MyApp.slnx
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Server=127.0.0.1;Port=3366;Database=my_mall;User=root;Password=mysql123456;"
+    "Default": "Server=127.0.0.1;Port=3366;Database=my_mall;User=root;Password=mysql123456;",
+    "Redis": "127.0.0.1:6699,password=redis123456,defaultDatabase=6"
   }
 }
 ```
@@ -160,10 +162,10 @@ GET /                           →  { name, version, endpoints[] }
 | PUT | `/api/admin/products/{id}/unshelve` | 下架 |
 | PUT | `/api/admin/products/{id}/enable` | 启用 |
 | PUT | `/api/admin/products/{id}/disable` | 禁用 |
-| GET | `/api/admin/categories` | 分类树 |
-| POST | `/api/admin/categories` | 新增分类 |
-| PUT | `/api/admin/categories/{id}` | 修改分类 |
-| DELETE | `/api/admin/categories/{id}` | 删除分类 |
+| GET | `/api/admin/categories` | 分类树（Redis 缓存） |
+| POST | `/api/admin/categories` | 新增分类（失效缓存） |
+| PUT | `/api/admin/categories/{id}` | 修改分类（失效缓存） |
+| DELETE | `/api/admin/categories/{id}` | 删除分类（失效缓存） |
 
 **列表查询参数**（`GET /api/admin/products`）：
 
@@ -217,19 +219,11 @@ GET /                           →  { name, version, endpoints[] }
   "total": 100, "page": 1, "pageSize": 20,
   "list": [
     {
-      "id": 1,
-      "categoryId": 6,
-      "categoryName": "手机",
-      "name": "智能手机 X1",
-      "subtitle": "旗舰新品",
-      "mainImage": "/img/phone.jpg",
-      "status": 1,
-      "unit": "部",
-      "minPrice": 3999.00,
-      "maxPrice": 4599.00,
-      "totalStock": 150,
-      "salesCount": 0,
-      "sortOrder": 1,
+      "id": 1, "categoryId": 6, "categoryName": "手机",
+      "name": "智能手机 X1", "subtitle": "旗舰新品",
+      "mainImage": "/img/phone.jpg", "status": 1, "unit": "部",
+      "minPrice": 3999.00, "maxPrice": 4599.00,
+      "totalStock": 150, "salesCount": 0, "sortOrder": 1,
       "createdAt": "2026-05-15T10:00:00"
     }
   ]
@@ -256,7 +250,7 @@ GET /                           →  { name, version, endpoints[] }
 |------|------|------|
 | GET | `/api/products` | 商品列表（参数同后台） |
 | GET | `/api/products/{id}` | 商品详情 |
-| GET | `/api/categories` | 分类树 |
+| GET | `/api/categories` | 分类树（Redis 缓存） |
 
 ## 多 SKU 模型
 
@@ -277,6 +271,32 @@ Product (1) ─── (N) ProductSku
 | `totalStock` | SUM(sku.stock) |
 
 排序 `sortField=price` 按 SKU 最低价排序。
+
+## Redis 缓存
+
+### 分类树缓存
+
+`ProductCategoryService` 对分类树做了 Redis 缓存：
+
+```
+读流程：GetTreeAsync()
+  Redis GET "categories:tree"
+    ├── 命中 → 直接返回
+    └── 未命中 → 查库构建树 → Redis SET 回填 → 返回
+
+写流程：CreateAsync / UpdateAsync / DeleteAsync
+  执行数据库变更 → Redis DEL "categories:tree"
+```
+
+| 配置项 | 值 |
+|--------|-----|
+| Key | `categories:tree` |
+| 序列化 | System.Text.Json（camelCase） |
+| 过期时间 | 绝对过期 1 小时 |
+| 失效策略 | 写时删除（Cache-Aside） |
+| Redis 地址 | `127.0.0.1:6699`，密码 `redis123456`，DB 6 |
+
+分类是典型的读多写少数据，使用 Cache-Aside 策略在保证一致性的同时减少数据库查询。
 
 ## 代码风格
 
@@ -301,4 +321,5 @@ dotnet format MyApp.slnx --verify-no-changes  # 仅检查
 - **JSON 序列化**：`ProductService` 内部用 `System.Text.Json`（camelCase 策略），规格和轮播图直接以 JSON 存入 MySQL
 - **SKU 更新策略**：编辑商品时先软删除全部旧 SKU 再批量插入新 SKU，避免逐个比对
 - **状态更新**：批量操作用 `ExecuteUpdateAsync`（非追踪、高性能 SQL），单条操作用 `FindAsync` + SaveChanges
+- **分类缓存**：Redis Cache-Aside 策略，读时缓存、写时删除，key = `categories:tree`
 - **全局查询过滤器**：`HasQueryFilter(e => !e.IsDeleted)` 使得所有 LINQ 查询自动排除已删除记录
